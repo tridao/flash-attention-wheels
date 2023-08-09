@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
           os: [ubuntu-22.04]
-          python-version: ['3.10']
+          python-version: ['3.9', '3.10']
           torch-version: ['1.12.0']
           cuda-version: ['117']
 
@@ -38,6 +38,7 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet
           bash .github/workflows/env.sh
+          python --version
           # echo ${{ needs.create_release.outputs.upload_url }}
           # echo ${{ needs.steps.extract_branch.outputs.upload_url }}
         shell:
