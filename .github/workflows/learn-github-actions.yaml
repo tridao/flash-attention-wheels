@@ -43,3 +43,18 @@ jobs:
           # echo ${{ needs.steps.extract_branch.outputs.upload_url }}
         shell:
           bash
+
+      - name: Install CUDA ${{ matrix.cuda-version }}
+        if: ${{ matrix.cuda-version != 'cpu' }}
+        run: |
+          bash .github/workflows/cuda/cu${{ matrix.cuda-version }}-${{ runner.os }}.sh
+        shell:
+          bash
+
+      - name: Check GPU Env
+        if: ${{ matrix.cuda-version != 'cpu' }}
+        run: |
+          source .github/workflows/cuda/cu${{ matrix.cuda-version }}-${{ runner.os }}-env.sh
+          nvcc --version
+        shell:
+          bash
