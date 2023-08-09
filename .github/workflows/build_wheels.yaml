@@ -1,16 +1,7 @@
-name: learn-github-actions
-run-name: ${{ github.actor }} is learning GitHub Actions
+name: FA wheels
+run-name: FA wheels
 on: [push]
 jobs:
-  # check-bats-version:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '14'
-  #     - run: npm install -g bats
-  #     - run: bats -v
 
   build_wheels:
     name: Build Wheel
@@ -76,3 +67,19 @@ jobs:
           python -c "from torch.utils import cpp_extension; print (cpp_extension.CUDA_HOME)"
         shell:
           bash
+
+      - name: Build wheel
+        run: |
+          export FLASH_ATTENTION_FORCE_BUILD="TRUE"
+          export PATH=/usr/local/nvidia/bin:/usr/local/nvidia/lib64:$PATH
+          export LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+          pip install ninja packaging setuptools wheel
+          python setup.py bdist_wheel --dist-dir=dist
+          tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
+          wheel_name=$(ls dist/*whl | xargs -n 1 basename | sed "s/-/+$tmpname-/2")
+          ls dist/*whl |xargs -I {} mv {} dist/${wheel_name}
+          echo "wheel_name=${wheel_name}" >> $GITHUB_ENV
+
+      - name: Log Built Wheels
+        run: |
+          ls dist
