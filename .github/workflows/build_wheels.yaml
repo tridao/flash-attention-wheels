@@ -48,7 +48,7 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '11.7.1'
-          linux-local-args: ['--toolkit']
+          linux-local-args: '["--toolkit"]'
 
       - name: Check GPU Env
         if: ${{ matrix.cuda-version != 'cpu' }}
