@@ -74,6 +74,7 @@ jobs:
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
+          pip install --upgrade pip
           # We want setuptools >= 49.6.0 otherwise we can't compile the extension if system CUDA version is 11.7 and pytorch cuda version is 11.6
           # https://github.com/pytorch/pytorch/blob/664058fa83f1d8eede5d66418abff6e20bd76ca8/torch/utils/cpp_extension.py#L810
           # However this still fails so I'm using a newer version of setuptools
@@ -129,3 +130,34 @@ jobs:
           asset_path: ./dist/${{env.wheel_name}}
           asset_name: ${{env.wheel_name}}
           asset_content_type: application/*
+
+  # publish_package:
+  #   name: Publish package
+  #   needs: [build_wheels]
+
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10'
+
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install ninja packaging setuptools wheel twine
+  #         pip install torch
+
+  #     - name: Build core package
+  #       env:
+  #         FLASH_ATTENTION_SKIP_CUDA_BUILD: "TRUE"
+  #       run: |
+  #         python setup.py sdist --dist-dir=dist
+
+  #     - name: Deploy
+  #       env:
+  #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+  #         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+  #       run: |
+  #         python -m twine upload dist/*
