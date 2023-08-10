@@ -73,9 +73,10 @@ jobs:
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
-          # We want setuptools >= 49.6.0 otherwise we can't compile if system CUDA version is 11.7 and pytorch cuda version is 11.6
+          # We want setuptools >= 49.6.0 otherwise we can't compile the extension if system CUDA version is 11.7 and pytorch cuda version is 11.6
           # https://github.com/pytorch/pytorch/blob/664058fa83f1d8eede5d66418abff6e20bd76ca8/torch/utils/cpp_extension.py#L810
-          pip install setuptools>=49.6.0
+          # However this still fails so I'm using a newer version of setuptools
+          pip install setuptools==68.0.0
           # We want to figure out the CUDA version to download pytorch
           # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
           # This code is ugly, maybe there's a better way to do this.
