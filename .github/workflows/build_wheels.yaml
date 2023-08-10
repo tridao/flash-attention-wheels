@@ -33,7 +33,9 @@ jobs:
           cuda: '11.7.1'
           linux-local-args: '["--toolkit"]'
           method: 'network'
-          sub-packages: '["nvcc"]'
+          # sub-packages: '["nvcc"]'
+          # We need the cuda libraries (e.g. cuSparse) for compiling PyTorch extension,
+          # not just nvcc
 
       # - name: Check GPU Env
       #   if: ${{ matrix.cuda-version != 'cpu' }}
