@@ -25,23 +25,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # - name: Set up Linux Env
-      #   if: ${{ runner.os == 'Linux' }}
-      #   run: |
-      #     sudo rm -rf /usr/share/dotnet
-      #     bash .github/workflows/env.sh
-      #     # echo ${{ needs.create_release.outputs.upload_url }}
-      #     # echo ${{ needs.steps.extract_branch.outputs.upload_url }}
-      #   shell:
-      #     bash
-
-      # - name: Install CUDA ${{ matrix.cuda-version }}
-      #   if: ${{ matrix.cuda-version != 'cpu' }}
-      #   run: |
-      #     bash .github/workflows/cuda/cu${{ matrix.cuda-version }}-${{ runner.os }}.sh
-      #   shell:
-      #     bash
-
       - name: Install CUDA ${{ matrix.cuda-version }}
         if: ${{ matrix.cuda-version != 'cpu' }}
         uses: Jimver/cuda-toolkit@v0.2.11
@@ -50,17 +33,17 @@ jobs:
           cuda: '11.7.1'
           linux-local-args: '["--toolkit"]'
 
-      - name: Check GPU Env
-        if: ${{ matrix.cuda-version != 'cpu' }}
-        run: |
-          source .github/workflows/cuda/cu${{ matrix.cuda-version }}-${{ runner.os }}-env.sh
-          nvcc --version
-        shell:
-          bash
+      # - name: Check GPU Env
+      #   if: ${{ matrix.cuda-version != 'cpu' }}
+      #   run: |
+      #     source .github/workflows/cuda/cu${{ matrix.cuda-version }}-${{ runner.os }}-env.sh
+      #     nvcc --version
+      #   shell:
+      #     bash
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
-          pip install numpy pyyaml scipy ipython mkl mkl-include ninja cython typing pandas typing-extensions dataclasses && conda clean -ya
+          # pip install numpy pyyaml scipy ipython mkl mkl-include ninja cython typing pandas typing-extensions dataclasses && conda clean -ya
           pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${{ matrix.cuda-version }}/torch_stable.html
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
