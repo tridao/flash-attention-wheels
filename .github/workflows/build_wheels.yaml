@@ -73,12 +73,15 @@ jobs:
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
+          # We want setuptools >= 49.6.0 otherwise we can't compile if system CUDA version is 11.7 and pytorch cuda version is 11.6
+          # https://github.com/pytorch/pytorch/blob/664058fa83f1d8eede5d66418abff6e20bd76ca8/torch/utils/cpp_extension.py#L810
+          pip install setuptools>=49.6.0
           # We want to figure out the CUDA version to download pytorch
           # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
           # This code is ugly, maybe there's a better way to do this.
-          nvcc --version
           export TORCH_CUDA_VERSION=$(python -c "import os; maxv = {'1.12': 116, '1.13': 117, '2.0': 118}[os.environ['MATRIX_TORCH_VERSION']]; minv = {'1.12': 113, '1.13': 116, '2.0': 117}[os.environ['MATRIX_TORCH_VERSION']]; print(max(min(int(os.environ['MATRIX_CUDA_VERSION']), maxv), minv))")
           pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}/torch_stable.html
+          nvcc --version
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
           python -c "import torch; print('CUDA:', torch.version.cuda)"
@@ -89,8 +92,6 @@ jobs:
       - name: Build wheel
         run: |
           export FLASH_ATTENTION_FORCE_BUILD="TRUE"
-          pip install -U setuptools
-          pip list | grep setuptools
           pip install ninja packaging wheel
           python setup.py bdist_wheel --dist-dir=dist
           # tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
