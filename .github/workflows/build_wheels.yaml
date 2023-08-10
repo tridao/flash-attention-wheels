@@ -32,6 +32,8 @@ jobs:
         with:
           cuda: '11.7.1'
           linux-local-args: '["--toolkit"]'
+          method: 'network'
+          sub-packages: '["nvcc"]'
 
       # - name: Check GPU Env
       #   if: ${{ matrix.cuda-version != 'cpu' }}
