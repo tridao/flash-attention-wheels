@@ -66,9 +66,10 @@ jobs:
         with:
           cuda: ${{ matrix.cuda-version }}
           linux-local-args: '["--toolkit"]'
+          # default method is "local", and we're hitting some error with caching for CUDA 11.8
+          method: 'network'
           # We need the cuda libraries (e.g. cuSparse, cuSolver) for compiling PyTorch extensions,
           # not just nvcc
-          # method: 'network'
           # sub-packages: '["nvcc"]'
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
