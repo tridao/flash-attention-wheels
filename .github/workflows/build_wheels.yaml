@@ -89,7 +89,9 @@ jobs:
       - name: Build wheel
         run: |
           export FLASH_ATTENTION_FORCE_BUILD="TRUE"
-          pip install ninja packaging setuptools wheel
+          pip install -U setuptools
+          pip list | grep setuptools
+          pip install ninja packaging wheel
           python setup.py bdist_wheel --dist-dir=dist
           # tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
           tmpname=cu${MATRIX_CUDA_VERSION}torch${MATRIX_TORCH_VERSION}
