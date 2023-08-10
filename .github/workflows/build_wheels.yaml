@@ -1,6 +1,11 @@
 name: FA wheels
 run-name: FA wheels
-on: [push]
+# on: [push]
+on:
+  create:
+    tags:
+      - '**'
+
 jobs:
 
   setup_release:
