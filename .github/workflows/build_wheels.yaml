@@ -68,7 +68,7 @@ jobs:
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
-          pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${MATRIX_CUDA_VERSION}
+          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${MATRIX_CUDA_VERSION}
           echo ${{ needs.create_release.outputs.upload_url }}
           echo ${{ needs.steps.extract_branch.outputs.upload_url }}
           python --version
