@@ -39,7 +39,8 @@ jobs:
           # python-version: ['3.10']
           # torch-version: ['1.12.1', '1.13.1']
           torch-version: ['1.13.1']
-          cuda-version: ['117']
+          # cuda-version: ['117']
+          cuda-version: ['11.7.1']
 
     steps:
       - name: Checkout
@@ -50,6 +51,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up CUDA version
+        run: echo "MATRIX_CUDA_VERSION=$(echo ${{ matrix.cuda-version }} | awk -F \. {'print $1 $2'})" >> $GITHUB_ENV
+
       - name: Install CUDA ${{ matrix.cuda-version }}
         if: ${{ matrix.cuda-version != 'cpu' }}
         uses: Jimver/cuda-toolkit@v0.2.11
@@ -57,15 +61,14 @@ jobs:
         with:
           cuda: '11.7.1'
           linux-local-args: '["--toolkit"]'
-          # We need the cuda libraries (e.g. cuSparse, cuSolver) for compiling PyTorch extension,
+          # We need the cuda libraries (e.g. cuSparse, cuSolver) for compiling PyTorch extensions,
           # not just nvcc
           # method: 'network'
           # sub-packages: '["nvcc"]'
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
-          # pip install numpy pyyaml scipy ipython mkl mkl-include ninja cython typing pandas typing-extensions dataclasses && conda clean -ya
-          pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${{ matrix.cuda-version }}/torch_stable.html
+          pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${MATRIX_CUDA_VERSION}
           echo ${{ needs.create_release.outputs.upload_url }}
           echo ${{ needs.steps.extract_branch.outputs.upload_url }}
           python --version
@@ -74,6 +77,21 @@ jobs:
           python -c "from torch.utils import cpp_extension; print (cpp_extension.CUDA_HOME)"
         shell:
           bash
+
+      - name: Build wheel
+        run: |
+          export FLASH_ATTENTION_FORCE_BUILD="TRUE"
+          pip install ninja packaging setuptools wheel
+          python setup.py bdist_wheel --dist-dir=dist
+          # tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
+          tmpname=cu${MATRIX_CUDA_VERSION}torch${{ matrix.torch-version }}
+          wheel_name=$(ls dist/*whl | xargs -n 1 basename | sed "s/-/+$tmpname-/2")
+          ls dist/*whl |xargs -I {} mv {} dist/${wheel_name}
+          echo "wheel_name=${wheel_name}" >> $GITHUB_ENV
+
+      - name: Log Built Wheels
+        run: |
+          ls dist
 
       - name: Get the tag version
         id: extract_branch
@@ -86,22 +104,6 @@ jobs:
           tag_name: ${{ steps.extract_branch.outputs.branch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build wheel
-        run: |
-          export FLASH_ATTENTION_FORCE_BUILD="TRUE"
-          # export PATH=/usr/local/nvidia/bin:/usr/local/nvidia/lib64:$PATH
-          # export LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-          pip install ninja packaging setuptools wheel
-          python setup.py bdist_wheel --dist-dir=dist
-          tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
-          wheel_name=$(ls dist/*whl | xargs -n 1 basename | sed "s/-/+$tmpname-/2")
-          ls dist/*whl |xargs -I {} mv {} dist/${wheel_name}
-          echo "wheel_name=${wheel_name}" >> $GITHUB_ENV
-
-      - name: Log Built Wheels
-        run: |
-          ls dist
 
       - name: Upload Release Asset
         id: upload_release_asset
