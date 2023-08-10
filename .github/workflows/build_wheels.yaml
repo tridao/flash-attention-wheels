@@ -3,9 +3,28 @@ run-name: FA wheels
 on: [push]
 jobs:
 
+  setup_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the tag version
+        id: extract_branch
+        run: echo ::set-output name=branch::${GITHUB_REF#refs/tags/}
+        shell: bash
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract_branch.outputs.branch }}
+          release_name: ${{ steps.extract_branch.outputs.branch }}
+
   build_wheels:
     name: Build Wheel
     runs-on: ${{ matrix.os }}
+    needs: setup_release
 
     strategy:
       fail-fast: false
@@ -13,7 +32,7 @@ jobs:
           os: [ubuntu-22.04]
           # python-version: ['3.9', '3.10']
           python-version: ['3.10']
-          torch-version: ['1.13']
+          torch-version: ['1.13.1']
           cuda-version: ['117']
 
     steps:
@@ -49,12 +68,26 @@ jobs:
         run: |
           # pip install numpy pyyaml scipy ipython mkl mkl-include ninja cython typing pandas typing-extensions dataclasses && conda clean -ya
           pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${{ matrix.cuda-version }}/torch_stable.html
+          echo ${{ needs.create_release.outputs.upload_url }}
+          echo ${{ needs.steps.extract_branch.outputs.upload_url }}
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
           python -c "import torch; print('CUDA:', torch.version.cuda)"
           python -c "from torch.utils import cpp_extension; print (cpp_extension.CUDA_HOME)"
         shell:
           bash
+
+      - name: Get the tag version
+        id: extract_branch
+        run: echo ::set-output name=branch::${GITHUB_REF#refs/tags/}
+
+      - name: Get Release with tag
+        id: get_current_release
+        uses: joutvhu/get-release@v1
+        with:
+          tag_name: ${{ steps.extract_branch.outputs.branch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build wheel
         run: |
@@ -71,3 +104,14 @@ jobs:
       - name: Log Built Wheels
         run: |
           ls dist
+
+      - name: Upload Release Asset
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_current_release.outputs.upload_url }}
+          asset_path: ./dist/${{env.wheel_name}}
+          asset_name: ${{env.wheel_name}}
+          asset_content_type: application/*
