@@ -37,10 +37,9 @@ jobs:
           os: [ubuntu-22.04]
           python-version: ['3.7', '3.8', '3.9', '3.10']
           # python-version: ['3.10']
-          # torch-version: ['1.12.1', '1.13.1']
-          torch-version: ['1.13.1']
-          # cuda-version: ['117']
-          cuda-version: ['11.7.1']
+          torch-version: ['1.12.1', '1.13.1', '2.0.1']
+          # torch-version: ['1.13.1']
+          cuda-version: ['11.7.1', '11.6.2', '11.8.0']
 
     steps:
       - name: Checkout
@@ -51,15 +50,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up CUDA version
-        run: echo "MATRIX_CUDA_VERSION=$(echo ${{ matrix.cuda-version }} | awk -F \. {'print $1 $2'})" >> $GITHUB_ENV
+      - name: Set CUDA and PyTorch versions
+        run: |
+          echo "MATRIX_CUDA_VERSION=$(echo ${{ matrix.cuda-version }} | awk -F \. {'print $1 $2'})" >> $GITHUB_ENV
+          echo "MATRIX_TORCH_VERSION=$(echo ${{ matrix.torch-version }} | awk -F \. {'print $1 . $2'})" >> $GITHUB_ENV
 
       - name: Install CUDA ${{ matrix.cuda-version }}
         if: ${{ matrix.cuda-version != 'cpu' }}
         uses: Jimver/cuda-toolkit@v0.2.11
         id: cuda-toolkit
         with:
-          cuda: '11.7.1'
+          cuda: ${{ matrix.cuda-version }}
           linux-local-args: '["--toolkit"]'
           # We need the cuda libraries (e.g. cuSparse, cuSolver) for compiling PyTorch extensions,
           # not just nvcc
@@ -68,9 +69,11 @@ jobs:
 
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
-          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${MATRIX_CUDA_VERSION}
-          echo ${{ needs.create_release.outputs.upload_url }}
-          echo ${{ needs.steps.extract_branch.outputs.upload_url }}
+          # We want to figure out the CUDA version to download pytorch
+          # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
+          # This code is ugly, maybe there's a better way to do this.
+          export TORCH_CUDA_VERSION=$(python -c "import os; maxv = {'1.12': 116, '1.13': 117, '2.0': 118}[os.environ['MATRIX_TORCH_VERSION']]; minv = {'1.12': 113, '1.13': 116, '2.0': 117}[os.environ['MATRIX_TORCH_VERSION']]; print(max(min(int(os.environ['MATRIX_CUDA_VERSION']), maxv), minv))")
+          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
           python -c "import torch; print('CUDA:', torch.version.cuda)"
@@ -84,7 +87,7 @@ jobs:
           pip install ninja packaging setuptools wheel
           python setup.py bdist_wheel --dist-dir=dist
           # tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
-          tmpname=cu${MATRIX_CUDA_VERSION}torch${{ matrix.torch-version }}
+          tmpname=cu${MATRIX_CUDA_VERSION}torch${MATRIX_TORCH_VERSION}
           wheel_name=$(ls dist/*whl | xargs -n 1 basename | sed "s/-/+$tmpname-/2")
           ls dist/*whl |xargs -I {} mv {} dist/${wheel_name}
           echo "wheel_name=${wheel_name}" >> $GITHUB_ENV
