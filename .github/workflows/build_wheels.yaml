@@ -40,6 +40,10 @@ jobs:
           torch-version: ['1.12.1', '1.13.1', '2.0.1']
           # torch-version: ['1.13.1']
           cuda-version: ['11.7.1', '11.6.2', '11.8.0']
+          exclude:
+            # Pytorch 2.0 only supports Python >= 3.8
+            - torch-version: '2.0.1'
+              python-version: '3.7'
 
     steps:
       - name: Checkout
@@ -72,8 +76,9 @@ jobs:
           # We want to figure out the CUDA version to download pytorch
           # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
           # This code is ugly, maybe there's a better way to do this.
+          nvcc --version
           export TORCH_CUDA_VERSION=$(python -c "import os; maxv = {'1.12': 116, '1.13': 117, '2.0': 118}[os.environ['MATRIX_TORCH_VERSION']]; minv = {'1.12': 113, '1.13': 116, '2.0': 117}[os.environ['MATRIX_TORCH_VERSION']]; print(max(min(int(os.environ['MATRIX_CUDA_VERSION']), maxv), minv))")
-          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}
+          pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}/torch_stable.html
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
           python -c "import torch; print('CUDA:', torch.version.cuda)"
