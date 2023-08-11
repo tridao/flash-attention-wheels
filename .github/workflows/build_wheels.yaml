@@ -52,6 +52,13 @@ jobs:
               python-version: '3.7'
             - torch-version: '2.1.0dev20230810'
               python-version: '3.7'
+            # Pytorch <= 2.0 only supports CUDA <= 11.8
+            - torch-version: '1.12.1'
+              cuda-version: '12.1.0'
+            - torch-version: '1.13.1'
+              cuda-version: '12.1.0'
+            - torch-version: '2.0.1'
+              cuda-version: '12.1.0'
             # Pytorch >= 2.1 only supports CUDA 12.1
             - torch-version: '2.1.0dev20230810'
               cuda-version: '11.6.2'
