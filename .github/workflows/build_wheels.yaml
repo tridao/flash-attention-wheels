@@ -42,12 +42,23 @@ jobs:
       matrix:
           os: [ubuntu-22.04]
           python-version: ['3.7', '3.8', '3.9', '3.10']
-          torch-version: ['1.12.1', '1.13.1', '2.0.1']
-          cuda-version: ['11.6.2', '11.7.1', '11.8.0']
+          # torch-version: ['1.12.1', '1.13.1', '2.0.1']
+          # cuda-version: ['11.6.2', '11.7.1', '11.8.0', '12.1.1']
+          torch-version: ['1.12.1', '1.13.1', '2.0.1', '2.1.0.dev20230810']
+          cuda-version: ['11.6.2', '11.7.1', '11.8.0', '12.1.0']
           exclude:
-            # Pytorch 2.0 only supports Python >= 3.8
+            # Pytorch >= 2.0 only supports Python >= 3.8
             - torch-version: '2.0.1'
               python-version: '3.7'
+            - torch-version: '2.1.0dev20230810'
+              python-version: '3.7'
+            # Pytorch >= 2.1 only supports CUDA 12.1
+            - torch-version: '2.1.0dev20230810'
+              cuda-version: '11.6.2'
+            - torch-version: '2.1.0dev20230810'
+              cuda-version: '11.7.1'
+            - torch-version: '2.1.0dev20230810'
+              cuda-version: '11.8.0'
 
     steps:
       - name: Checkout
@@ -85,9 +96,13 @@ jobs:
           # We want to figure out the CUDA version to download pytorch
           # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
           # This code is ugly, maybe there's a better way to do this.
-          export TORCH_CUDA_VERSION=$(python -c "import os; maxv = {'1.12': 116, '1.13': 117, '2.0': 118}[os.environ['MATRIX_TORCH_VERSION']]; minv = {'1.12': 113, '1.13': 116, '2.0': 117}[os.environ['MATRIX_TORCH_VERSION']]; print(max(min(int(os.environ['MATRIX_CUDA_VERSION']), maxv), minv))")
+          export TORCH_CUDA_VERSION=$(python -c "import os; minv = {'1.12': 113, '1.13': 116, '2.0': 117, '2.1': 121}[os.environ['MATRIX_TORCH_VERSION']]; maxv = {'1.12': 116, '1.13': 117, '2.0': 118, '2.1': 121}[os.environ['MATRIX_TORCH_VERSION']]; print(max(min(int(os.environ['MATRIX_CUDA_VERSION']), maxv), minv))")
           # pip install --no-index --no-cache-dir torch==${{ matrix.torch-version }} -f https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}/torch_stable.html
-          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}
+          if [[ ${{ matrix.torch-version }} == *"dev"* ]]; then
+            pip install --pre torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/nightly/cu${TORCH_CUDA_VERSION}
+          else
+            pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}
+          fi
           nvcc --version
           python --version
           python -c "import torch; print('PyTorch:', torch.__version__)"
@@ -105,7 +120,6 @@ jobs:
           pip install ninja packaging wheel
           export FLASH_ATTENTION_FORCE_BUILD="TRUE"
           python setup.py bdist_wheel --dist-dir=dist
-          # tmpname=cu${{ matrix.cuda-version }}torch${{ matrix.torch-version }}
           tmpname=cu${MATRIX_CUDA_VERSION}torch${MATRIX_TORCH_VERSION}
           wheel_name=$(ls dist/*whl | xargs -n 1 basename | sed "s/-/+$tmpname-/2")
           ls dist/*whl |xargs -I {} mv {} dist/${wheel_name}
