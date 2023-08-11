@@ -26,7 +26,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 # ninja build does not work unless include_dirs are abs path
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
-PACKAGE_NAME = "flash_attn_wheels"
+PACKAGE_NAME = "flash_attn_wheels_test"
 
 # @pierce - TODO: Update for proper release
 BASE_WHEEL_URL = "https://github.com/tridao/flash-attention-wheels/releases/download/{tag_name}/{wheel_name}"

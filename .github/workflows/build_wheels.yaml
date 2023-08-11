@@ -81,6 +81,8 @@ jobs:
       - name: Install PyTorch ${{ matrix.torch-version }}+cu${{ matrix.cuda-version }}
         run: |
           pip install --upgrade pip
+          # If we don't install before installing Pytorch, we get error for torch 2.0.1
+          # ERROR: Could not find a version that satisfies the requirement setuptools>=40.8.0 (from versions: none)
           pip install lit
           # We want to figure out the CUDA version to download pytorch
           # e.g. we can have system CUDA version being 11.7 but if torch==1.12 then we need to download the wheel from cu116
@@ -154,7 +156,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install ninja packaging setuptools wheel twine
-          pip install torch
+          # We don't want to download anything CUDA-related here
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Build core package
         env:
