@@ -249,7 +249,7 @@ class CachedWheelsCommand(_bdist_wheel):
         platform_name = get_platform()
         flash_version = get_package_version()
         cuda_version = f"{cuda_version_raw.major}{cuda_version_raw.minor}"
-        torch_version = f"{torch_version_raw.major}.{torch_version_raw.minor}.{torch_version_raw.micro}"
+        torch_version = f"{torch_version_raw.major}.{torch_version_raw.minor}"
 
         # Determine wheel URL based on CUDA version, torch version, python version and OS
         wheel_filename = f'{PACKAGE_NAME}-{flash_version}+cu{cuda_version}torch{torch_version}-{python_version}-{python_version}-{platform_name}.whl'
