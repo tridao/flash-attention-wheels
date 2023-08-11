@@ -125,6 +125,8 @@ jobs:
           # However this still fails so I'm using a newer version of setuptools
           pip install setuptools==68.0.0
           pip install ninja packaging wheel
+          export PATH=/usr/local/nvidia/bin:/usr/local/nvidia/lib64:$PATH
+          export LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
           export FLASH_ATTENTION_FORCE_BUILD="TRUE"
           python setup.py bdist_wheel --dist-dir=dist
           tmpname=cu${MATRIX_CUDA_VERSION}torch${MATRIX_TORCH_VERSION}
