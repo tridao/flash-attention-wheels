@@ -103,25 +103,26 @@ if not torch.cuda.is_available():
     print(
         "\nWarning: Torch did not find available GPUs on this system.\n",
         "If your intention is to cross-compile, this is not an error.\n"
-        "By default, Apex will cross-compile for Pascal (compute capabilities 6.0, 6.1, 6.2),\n"
-        "Volta (compute capability 7.0), Turing (compute capability 7.5),\n"
-        "and, if the CUDA version is >= 11.0, Ampere (compute capability 8.0).\n"
+        "By default, FlashAttention will cross-compile for Ampere (compute capability 8.0, 8.6, "
+        "8.9), and, if the CUDA version is >= 11.8, Hopper (compute capability 9.0).\n"
         "If you wish to cross-compile for a single specific architecture,\n"
         'export TORCH_CUDA_ARCH_LIST="compute capability" before running setup.py.\n',
     )
     if os.environ.get("TORCH_CUDA_ARCH_LIST", None) is None and CUDA_HOME is not None:
         _, bare_metal_version = get_cuda_bare_metal_version(CUDA_HOME)
         if bare_metal_version >= Version("11.8"):
-            os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;6.1;6.2;7.0;7.5;8.0;8.6;9.0"
-        elif bare_metal_version >= Version("11.1"):
-            os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;6.1;6.2;7.0;7.5;8.0;8.6"
-        elif bare_metal_version == Version("11.0"):
-            os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;6.1;6.2;7.0;7.5;8.0"
+            os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0;8.6;9.0"
+        elif bare_metal_version >= Version("11.4"):
+            os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0;8.6"
         else:
-            os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;6.1;6.2;7.0;7.5"
+            os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0;8.6"
 
 cmdclass = {}
 ext_modules = []
+
+# We want this even if SKIP_CUDA_BUILD because when we run python setup.py sdist we want the .hpp
+# files included in the source distribution, in case the user compiles from source.
+subprocess.run(["git", "submodule", "update", "--init", "csrc/cutlass"])
 
 if not SKIP_CUDA_BUILD:
     print("\n\ntorch.__version__  = {}\n\n".format(torch.__version__))
@@ -139,8 +140,8 @@ if not SKIP_CUDA_BUILD:
     # Check, if CUDA11 is installed for compute capability 8.0
     cc_flag = []
     _, bare_metal_version = get_cuda_bare_metal_version(CUDA_HOME)
-    if bare_metal_version < Version("11.0"):
-        raise RuntimeError("FlashAttention is only supported on CUDA 11 and above")
+    if bare_metal_version < Version("11.4"):
+        raise RuntimeError("FlashAttention is only supported on CUDA 11.4 and above")
     # cc_flag.append("-gencode")
     # cc_flag.append("arch=compute_75,code=sm_75")
     cc_flag.append("-gencode")
@@ -149,7 +150,6 @@ if not SKIP_CUDA_BUILD:
     #     cc_flag.append("-gencode")
     #     cc_flag.append("arch=compute_90,code=sm_90")
 
-    subprocess.run(["git", "submodule", "update", "--init", "csrc/cutlass"])
     ext_modules.append(
         CUDAExtension(
             name="flash_attn_2_cuda_wheel",
