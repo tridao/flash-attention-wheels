@@ -257,10 +257,10 @@ class CachedWheelsCommand(_bdist_wheel):
         # cuda_version = f"{cuda_version_raw.major}{cuda_version_raw.minor}"
         cuda_version = f"{torch_cuda_version.major}{torch_cuda_version.minor}"
         torch_version = f"{torch_version_raw.major}.{torch_version_raw.minor}"
-        cxx11_abi = torch._C._GLIBCXX_USE_CXX11_ABI
+        cxx11_abi = str(torch._C._GLIBCXX_USE_CXX11_ABI).upper()
 
         # Determine wheel URL based on CUDA version, torch version, python version and OS
-        wheel_filename = f'{PACKAGE_NAME}-{flash_version}+cu{cuda_version}torch{torch_version}cxx11abi{cxx11_abi.capitalize()}-{python_version}-{python_version}-{platform_name}.whl'
+        wheel_filename = f'{PACKAGE_NAME}-{flash_version}+cu{cuda_version}torch{torch_version}cxx11abi{cxx11_abi}-{python_version}-{python_version}-{platform_name}.whl'
         wheel_url = BASE_WHEEL_URL.format(
             tag_name=f"v{flash_version}",
             wheel_name=wheel_filename
