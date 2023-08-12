@@ -85,10 +85,11 @@ jobs:
         run: |
           echo "MATRIX_CUDA_VERSION=$(echo ${{ matrix.cuda-version }} | awk -F \. {'print $1 $2'})" >> $GITHUB_ENV
           echo "MATRIX_TORCH_VERSION=$(echo ${{ matrix.torch-version }} | awk -F \. {'print $1 "." $2'})" >> $GITHUB_ENV
-      - name: Free up disk space
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo rm -rf /usr/share/dotnet
+
+      # - name: Free up disk space
+      #   if: ${{ runner.os == 'Linux' }}
+      #   run: |
+      #     sudo rm -rf /usr/share/dotnet
 
       - name: Install CUDA ${{ matrix.cuda-version }}
         if: ${{ matrix.cuda-version != 'cpu' }}
