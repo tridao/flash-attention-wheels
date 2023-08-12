@@ -85,41 +85,41 @@ void run_flash_bwd_seqk_parallel(Flash_bwd_params &params, cudaStream_t stream, 
 
 template<typename Kernel_traits, bool Is_dropout>
 void run_flash_bwd_seqq_parallel(Flash_bwd_params &params, cudaStream_t stream, const bool configure) {
-    const int num_n_block = (params.seqlen_k + Kernel_traits::kBlockN - 1) / Kernel_traits::kBlockN;
-    dim3 grid_n(num_n_block, params.b, params.h_k);
-    flash_bwd_clear_dkvaccum_kernel<Kernel_traits><<<grid_n, Kernel_traits::kNThreads, 0, stream>>>(params);
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
+    // const int num_n_block = (params.seqlen_k + Kernel_traits::kBlockN - 1) / Kernel_traits::kBlockN;
+    // dim3 grid_n(num_n_block, params.b, params.h_k);
+    // flash_bwd_clear_dkvaccum_kernel<Kernel_traits><<<grid_n, Kernel_traits::kNThreads, 0, stream>>>(params);
+    // C10_CUDA_KERNEL_LAUNCH_CHECK();
 
-    const int num_m_block = (params.seqlen_q + Kernel_traits::kBlockM - 1) / Kernel_traits::kBlockM;
-    dim3 grid_m(num_m_block, params.b, params.h);
-    // We also use is_even_N to set Unpadded in the BlockInfo constructor, so we need to check
-    // for cu_seqlens_k as well.
-    const bool is_even_N = params.cu_seqlens_q == nullptr && params.cu_seqlens_k == nullptr && params.seqlen_k % Kernel_traits::kBlockN == 0;
-    const bool is_even_K = params.d == Kernel_traits::kHeadDim;
-    constexpr int smem_size_dq_dk_dv = Kernel_traits::kSmemSize1rowblock;
-    // printf("smem_size_dq_dk_dv = %d\n", smem_size_dq_dk_dv);
-    BOOL_SWITCH(params.is_causal, IsCausalConst, [&] {
-        BOOL_SWITCH(is_even_N, IsEvenNConst, [&] {
-            BOOL_SWITCH(is_even_K, IsEvenKConst, [&] {
-                auto kernel = &flash_bwd_dq_dk_dv_loop_seqq_parallel_kernel<Kernel_traits, Is_dropout, IsCausalConst, IsEvenNConst, IsEvenKConst>;
-                // auto kernel = &flash_bwd_dq_dk_dv_loop_seqq_parallel_kernel<Kernel_traits, false, false, IsEvenNConst, IsEvenKConst>;
-                if (smem_size_dq_dk_dv >= 48 * 1024)  {
-                    C10_CUDA_CHECK(cudaFuncSetAttribute(
-                        kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, smem_size_dq_dk_dv));
-                }
-                kernel<<<grid_m, Kernel_traits::kNThreads, smem_size_dq_dk_dv, stream>>>(params);
-                C10_CUDA_KERNEL_LAUNCH_CHECK();
-            });
-        });
-    });
+    // const int num_m_block = (params.seqlen_q + Kernel_traits::kBlockM - 1) / Kernel_traits::kBlockM;
+    // dim3 grid_m(num_m_block, params.b, params.h);
+    // // We also use is_even_N to set Unpadded in the BlockInfo constructor, so we need to check
+    // // for cu_seqlens_k as well.
+    // const bool is_even_N = params.cu_seqlens_q == nullptr && params.cu_seqlens_k == nullptr && params.seqlen_k % Kernel_traits::kBlockN == 0;
+    // const bool is_even_K = params.d == Kernel_traits::kHeadDim;
+    // constexpr int smem_size_dq_dk_dv = Kernel_traits::kSmemSize1rowblock;
+    // // printf("smem_size_dq_dk_dv = %d\n", smem_size_dq_dk_dv);
+    // BOOL_SWITCH(params.is_causal, IsCausalConst, [&] {
+    //     BOOL_SWITCH(is_even_N, IsEvenNConst, [&] {
+    //         BOOL_SWITCH(is_even_K, IsEvenKConst, [&] {
+    //             auto kernel = &flash_bwd_dq_dk_dv_loop_seqq_parallel_kernel<Kernel_traits, Is_dropout, IsCausalConst, IsEvenNConst, IsEvenKConst>;
+    //             // auto kernel = &flash_bwd_dq_dk_dv_loop_seqq_parallel_kernel<Kernel_traits, false, false, IsEvenNConst, IsEvenKConst>;
+    //             if (smem_size_dq_dk_dv >= 48 * 1024)  {
+    //                 C10_CUDA_CHECK(cudaFuncSetAttribute(
+    //                     kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, smem_size_dq_dk_dv));
+    //             }
+    //             kernel<<<grid_m, Kernel_traits::kNThreads, smem_size_dq_dk_dv, stream>>>(params);
+    //             C10_CUDA_KERNEL_LAUNCH_CHECK();
+    //         });
+    //     });
+    // });
 
-    auto kernel_dkv = &flash_bwd_convert_dkv_kernel<Kernel_traits>;
-    if (Kernel_traits::kSmemKVSize >= 48 * 1024)  {
-        C10_CUDA_CHECK(cudaFuncSetAttribute(
-            kernel_dkv, cudaFuncAttributeMaxDynamicSharedMemorySize, Kernel_traits::kSmemKVSize));
-    }
-    kernel_dkv<<<grid_n, Kernel_traits::kNThreads, Kernel_traits::kSmemKVSize, stream>>>(params);
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
+    // auto kernel_dkv = &flash_bwd_convert_dkv_kernel<Kernel_traits>;
+    // if (Kernel_traits::kSmemKVSize >= 48 * 1024)  {
+    //     C10_CUDA_CHECK(cudaFuncSetAttribute(
+    //         kernel_dkv, cudaFuncAttributeMaxDynamicSharedMemorySize, Kernel_traits::kSmemKVSize));
+    // }
+    // kernel_dkv<<<grid_n, Kernel_traits::kNThreads, Kernel_traits::kSmemKVSize, stream>>>(params);
+    // C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 //
 

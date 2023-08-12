@@ -35,6 +35,7 @@ BASE_WHEEL_URL = "https://github.com/tridao/flash-attention-wheels/releases/down
 # SKIP_CUDA_BUILD: Intended to allow CI to use a simple `python setup.py sdist` run to copy over raw files, without any cuda compilation
 FORCE_BUILD = os.getenv("FLASH_ATTENTION_FORCE_BUILD", "FALSE") == "TRUE"
 SKIP_CUDA_BUILD = os.getenv("FLASH_ATTENTION_SKIP_CUDA_BUILD", "FALSE") == "TRUE"
+FORCE_CXX11_ABI = os.getenv("FLASH_ATTENTION_FORCE_CXX11_ABI", "FALSE") == "TRUE"
 
 
 def get_platform():
@@ -150,6 +151,9 @@ if not SKIP_CUDA_BUILD:
     #     cc_flag.append("-gencode")
     #     cc_flag.append("arch=compute_90,code=sm_90")
 
+    # HACK:
+    if FORCE_CXX11_ABI:
+        torch._C._GLIBCXX_USE_CXX11_ABI = True
     ext_modules.append(
         CUDAExtension(
             name="flash_attn_2_cuda_wheel",
@@ -253,9 +257,10 @@ class CachedWheelsCommand(_bdist_wheel):
         # cuda_version = f"{cuda_version_raw.major}{cuda_version_raw.minor}"
         cuda_version = f"{torch_cuda_version.major}{torch_cuda_version.minor}"
         torch_version = f"{torch_version_raw.major}.{torch_version_raw.minor}"
+        cxx11_abi = torch._C._GLIBCXX_USE_CXX11_ABI
 
         # Determine wheel URL based on CUDA version, torch version, python version and OS
-        wheel_filename = f'{PACKAGE_NAME}-{flash_version}+cu{cuda_version}torch{torch_version}-{python_version}-{python_version}-{platform_name}.whl'
+        wheel_filename = f'{PACKAGE_NAME}-{flash_version}+cu{cuda_version}torch{torch_version}cxx11abi{cxx11_abi.capitalize()}-{python_version}-{python_version}-{platform_name}.whl'
         wheel_url = BASE_WHEEL_URL.format(
             tag_name=f"v{flash_version}",
             wheel_name=wheel_filename
