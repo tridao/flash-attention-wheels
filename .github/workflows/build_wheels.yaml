@@ -36,21 +36,14 @@ jobs:
     name: Build Wheel
     needs: setup_release
     runs-on: ${{ matrix.os }}
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
 
     strategy:
       fail-fast: false
       matrix:
           os: [ubuntu-20.04]
-          # python-version: ['3.7', '3.8', '3.9', '3.10']
-          python-version: ['3.9']
-          # torch-version: ['1.12.1', '1.13.1', '2.0.1']
-          # cuda-version: ['11.6.2', '11.7.1', '11.8.0', '12.1.1']
-          # torch-version: ['1.12.1', '1.13.1', '2.0.1', '2.1.0.dev20230613']
-          torch-version: ['1.12.1']
-          # cuda-version: ['11.6.2', '11.7.1', '11.8.0', '12.1.0']
-          cuda-version: ['11.6.2', '11.7.1']
+          python-version: ['3.7', '3.8', '3.9', '3.10']
+          torch-version: ['1.12.1', '1.13.1', '2.0.1', '2.1.0.dev20230613']
+          cuda-version: ['11.6.2', '11.7.1', '11.8.0', '12.1.0']
           exclude:
             # Pytorch >= 2.0 only supports Python >= 3.8
             - torch-version: '2.0.1'
@@ -86,10 +79,10 @@ jobs:
           echo "MATRIX_CUDA_VERSION=$(echo ${{ matrix.cuda-version }} | awk -F \. {'print $1 $2'})" >> $GITHUB_ENV
           echo "MATRIX_TORCH_VERSION=$(echo ${{ matrix.torch-version }} | awk -F \. {'print $1 "." $2'})" >> $GITHUB_ENV
 
-      # - name: Free up disk space
-      #   if: ${{ runner.os == 'Linux' }}
-      #   run: |
-      #     sudo rm -rf /usr/share/dotnet
+      - name: Free up disk space
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo rm -rf /usr/share/dotnet
 
       - name: Install CUDA ${{ matrix.cuda-version }}
         if: ${{ matrix.cuda-version != 'cpu' }}

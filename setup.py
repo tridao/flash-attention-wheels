@@ -243,12 +243,15 @@ class CachedWheelsCommand(_bdist_wheel):
         raise_if_cuda_home_none("flash_attn")
 
         # Determine the version numbers that will be used to determine the correct wheel
-        _, cuda_version_raw = get_cuda_bare_metal_version(CUDA_HOME)
+        # We're using the CUDA version used to build torch, not the one currently installed
+        # _, cuda_version_raw = get_cuda_bare_metal_version(CUDA_HOME)
+        torch_cuda_version = parse(torch.version.cuda)
         torch_version_raw = parse(torch.__version__)
         python_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
         platform_name = get_platform()
         flash_version = get_package_version()
-        cuda_version = f"{cuda_version_raw.major}{cuda_version_raw.minor}"
+        # cuda_version = f"{cuda_version_raw.major}{cuda_version_raw.minor}"
+        cuda_version = f"{torch_cuda_version.major}{torch_cuda_version.minor}"
         torch_version = f"{torch_version_raw.major}.{torch_version_raw.minor}"
 
         # Determine wheel URL based on CUDA version, torch version, python version and OS
