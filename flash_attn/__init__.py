@@ -1,4 +1,4 @@
-__version__ = "2.0.8.post13"
+__version__ = "2.0.8.post14"
 
 from flash_attn.flash_attn_interface import flash_attn_func
 from flash_attn.flash_attn_interface import flash_attn_kvpacked_func
