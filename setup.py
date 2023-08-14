@@ -28,7 +28,6 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 
 PACKAGE_NAME = "flash_attn_wheels_test"
 
-# @pierce - TODO: Update for proper release
 BASE_WHEEL_URL = "https://github.com/tridao/flash-attention-wheels/releases/download/{tag_name}/{wheel_name}"
 
 # FORCE_BUILD: Force a fresh build locally, instead of attempting to find prebuilt wheels
@@ -148,9 +147,9 @@ if not SKIP_CUDA_BUILD:
     # cc_flag.append("arch=compute_75,code=sm_75")
     cc_flag.append("-gencode")
     cc_flag.append("arch=compute_80,code=sm_80")
-    # if bare_metal_version >= Version("11.8"):
-    #     cc_flag.append("-gencode")
-    #     cc_flag.append("arch=compute_90,code=sm_90")
+    if bare_metal_version >= Version("11.8"):
+        cc_flag.append("-gencode")
+        cc_flag.append("arch=compute_90,code=sm_90")
 
     # HACK: The compiler flag -D_GLIBCXX_USE_CXX11_ABI is set to be the same as
     # torch._C._GLIBCXX_USE_CXX11_ABI
@@ -300,6 +299,8 @@ setup(
     author="Tri Dao",
     author_email="trid@cs.stanford.edu",
     description="Flash Attention: Fast and Memory-Efficient Exact Attention",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/Dao-AILab/flash-attention",
     classifiers=[
         "Programming Language :: Python :: 3",

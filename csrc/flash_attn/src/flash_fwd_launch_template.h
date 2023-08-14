@@ -36,7 +36,7 @@ void run_flash_fwd(Flash_fwd_params &params, cudaStream_t stream) {
             BOOL_SWITCH(return_softmax, ReturnSoftmaxConst, [&] {
                 // Will only return softmax if dropout, to reduce compilation time.
                 auto kernel = &flash_fwd_kernel<Kernel_traits, Is_dropout, Is_causal, IsEvenNConst, IsEvenKConst, ReturnSoftmaxConst && Is_dropout>;
-                // auto kernel = &flash_fwd_kernel<Kernel_traits, false, false, true, true, ReturnSoftmaxConst && Is_dropout>;
+                // auto kernel = &flash_fwd_kernel<Kernel_traits, Is_dropout, Is_causal, IsEvenNConst, true, ReturnSoftmaxConst && Is_dropout>;
                 if (smem_size >= 48 * 1024) {
                     C10_CUDA_CHECK(cudaFuncSetAttribute(
                         kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, smem_size));
