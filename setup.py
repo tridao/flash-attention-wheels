@@ -91,9 +91,9 @@ def raise_if_cuda_home_none(global_option: str) -> None:
 
 
 def append_nvcc_threads(nvcc_extra_args):
-    _, bare_metal_version = get_cuda_bare_metal_version(CUDA_HOME)
-    if bare_metal_version >= Version("11.2"):
-        return nvcc_extra_args + ["--threads", "4"]
+    # _, bare_metal_version = get_cuda_bare_metal_version(CUDA_HOME)
+    # if bare_metal_version >= Version("11.2"):
+    #     return nvcc_extra_args + ["--threads", "4"]
     return nvcc_extra_args
 
 
