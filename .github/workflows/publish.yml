@@ -50,7 +50,8 @@ jobs:
           # Pytorch wheels currently don't use it, but nvcr images have Pytorch compiled with C++11 ABI.
           # Without this we get import error (undefined symbol: _ZN3c105ErrorC2ENS_14SourceLocationESs)
           # when building without C++11 ABI and using it on nvcr images.
-          cxx11_abi: ['FALSE', 'TRUE']
+          # cxx11_abi: ['FALSE', 'TRUE']
+          cxx11_abi: ['FALSE']
           exclude:
             # Pytorch <= 1.12 does not support Python 3.11
             - torch-version: '1.12.1'
